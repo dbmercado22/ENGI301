@@ -38,7 +38,7 @@ Using the following component to build an LED array guitar chord exercise device
     
 """
 
-import button as BUTTON
+import threaded_button as BUTTON
 import "pdf to music code"
 import potentiometer as POT
 import led as LED
@@ -47,7 +47,7 @@ import "code for LED array for guitar tabs"
 
 class GuitarHero():
     
-    music_list = [None]
+    music_list = None
     
     def __init__(self, reset_time=3.0, button="P2_2", potentiometer="P1_19"):
         
@@ -55,6 +55,8 @@ class GuitarHero():
         self.metronome_led  = LED.LED("P2_4")
         self.potentiometer  = POT.Potentiometer(potentiometer)
         self.button         = BUTTON.Button(button)
+        
+        self.music_list     = ["one", "two"]
         
         
     def _setup(self):
@@ -71,20 +73,27 @@ class GuitarHero():
             
         Returns the song the potentiometer's value is within its range
         """
+        current_song_index = 0
         length_of_music = len(music_list):          #this is the list of music
-        value = self.potentiometer.get_value()
+        potentiometer_range = 4095
+
+        value = self.potentiometer.get_value
+        
         for i in range(length_of_music):
-            low_range = (i*value)/length_of_music
-            high_range = ((i+1)*value) / length_of_music
+            low_range = (potentiometer_range/length_of_music) * i
+            high_range = (potentiometer_range / length_of_music) * (i+1)
+            print("Low = {0}  High = {1}".format(low_range, high_range))
             song_ranges.append((low_range, high_range))
-        while select_song(self) == False:
+
+        while select_song(self) == None:
             for song in song_ranges:
                 if value > song(0) and value < song(1):
                     current_song_index = song_ranges.index(song)
-                    return current_song_index
-            return current_song = music_list(current_song_index)
-        
+
+        return current_song = music_list(current_song_index)
+
     def pdf_to_music(self):
+        pass
         
     def select_song(self):
         """
@@ -95,7 +104,6 @@ class GuitarHero():
         Returns the selected song
         """
         current_song = self.song_scrolling()
-        self.button.wait_for_press()
         if self.button.is_pressed():
             return confirmed_song = current_song
 
@@ -107,7 +115,9 @@ class GuitarHero():
             - Sets the music's tempo to the value of the potentiometer
             
         """
-        music_tempo = self.potentiometer.get_value()
+        # max value in potentiometer is 4095
+        # max tempo possible is 204.8
+        music_tempo = (self.potentiometer.get_value() / 20)
         return music_tempo
         
     def led_metronome(self):
@@ -129,6 +139,7 @@ class GuitarHero():
                 self.sleep_time(100)
     
     def display_tabs(self):
+        pass
     
     def pause_song(self):
         """
@@ -136,7 +147,7 @@ class GuitarHero():
             - When button is pressed, it sets the system to sleep for 100 seconds
         """
         self.button.wait_for_press()
-        if (self.button.is_pressed == True):
+        if (self.button.is_pressed() == True):
             if self.button.get_last_press_duration() < self.reset_time:
                 self.sleep_time(100)
             
@@ -174,7 +185,21 @@ class GuitarHero():
     def run(self):
         
         self.song_scrolling()
-        self.led_metronome()
-        self.select_song()
-        self.display_tabs()
+        #self.led_metronome()
+        #self.select_song()
+        #self.display_tabs()
         
+        
+# Main Script
+
+if __name__ == '__main__':
+    
+    print("Program Start")
+    
+    guitar_hero = GuitarHero(debug=True)
+    
+    try:
+        guitar_hero.run()
+    
+    
+    

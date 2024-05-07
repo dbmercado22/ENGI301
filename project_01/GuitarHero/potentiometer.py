@@ -3,7 +3,7 @@
 Potentiometer Driver
 --------------------------------------------------------------------------
 License:   
-Copyright 2023 <NAME>
+Copyright 2023 Brian Mercado
 
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:

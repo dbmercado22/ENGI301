@@ -33,21 +33,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Using the following component to build an LED array guitar chord exercise device
     - button
     - green LED
-    - LED array 16x32
+    - SPI Display
     - Potentiometer
     
 """
-
+import time
+import random
 import threaded_button as BUTTON
-import "pdf to music code"
 import potentiometer as POT
-import led as LED
-import "code for LED array for guitar tabs"
+import threaded_led as LED
+import spi_screen as SPI
 
 
 class GuitarHero():
     
-    music_list = None
+    music_list = ["Major Chords", "Minor Chords", "Diminished Chords", "Augmented Chords"]
+    chosen_song = None
+    chosen_tempo = None
+    
     
     def __init__(self, reset_time=3.0, button="P2_2", potentiometer="P1_19"):
         
@@ -55,8 +58,9 @@ class GuitarHero():
         self.metronome_led  = LED.LED("P2_4")
         self.potentiometer  = POT.Potentiometer(potentiometer)
         self.button         = BUTTON.Button(button)
+        self.display        = SPI.SPI_Display()
         
-        self.music_list     = ["one", "two"]
+        self.music_list     = music_list
         
         
     def _setup(self):
@@ -74,7 +78,7 @@ class GuitarHero():
         Returns the song the potentiometer's value is within its range
         """
         current_song_index = 0
-        length_of_music = len(music_list):          #this is the list of music
+        length_of_music = len(music_list)          #this is the list of music
         potentiometer_range = 4095
 
         value = self.potentiometer.get_value
@@ -85,16 +89,16 @@ class GuitarHero():
             print("Low = {0}  High = {1}".format(low_range, high_range))
             song_ranges.append((low_range, high_range))
 
-        while select_song(self) == None:
+        while chosen_song == None:
             for song in song_ranges:
                 if value > song(0) and value < song(1):
                     current_song_index = song_ranges.index(song)
-
-        return current_song = music_list(current_song_index)
-
-    def pdf_to_music(self):
-        pass
+                    current_song = music_list(current_song_index)
+                    self.display.text(current_song)
+        return current_song
         
+        
+
     def select_song(self):
         """
         Uses button input to confirm the song you will be playing
@@ -105,7 +109,9 @@ class GuitarHero():
         """
         current_song = self.song_scrolling()
         if self.button.is_pressed():
-            return confirmed_song = current_song
+            chosen_song = current_song
+            self.display.blank()
+            return chosen_song
 
         
     def tempo(self):
@@ -118,7 +124,11 @@ class GuitarHero():
         # max value in potentiometer is 4095
         # max tempo possible is 204.8
         music_tempo = (self.potentiometer.get_value() / 20)
-        return music_tempo
+        print(music_tempo)
+        self.display.text(str(music_tempo))
+        if self.button.is_pressed():
+            chosen_tempo = music_tempo
+        return chosen_tempo
         
     def led_metronome(self):
         """
@@ -128,17 +138,34 @@ class GuitarHero():
             - Toggles LED off and on using sleep_time
             
         """
-        while end_song == False:
-            num_flashes = tempo() / 60      #number of flashes metronome must take per second
-            led_on_time = num_flashes / 2   #time needed for LED to flash on and off (should be equal)
-            self.metronome_led.on()
-            self.sleep_time(led_on_time)
-            self.metronome_led.off()
-            self.sleep_time(led_on_time)
-            if self.pause_song() == True:
-                self.sleep_time(100)
-    
+        timeperflash = 60 / tempo()      #time each flash takes within one minute
+        led_on_time = timeperflash / 2   #time needed for LED to flash on and off (should be equal)
+        
+        self.metronome_led.run(led_on_time)
+        
     def display_tabs(self):
+        
+        major_chords = ["tab_one", "tab_two"]
+        minor_chords = ["tab_three", "tab_four"]
+        diminished_chords = ["tab_five", "tab_six"]
+        augmented_chords = ["tab_seven", "tab_eight"]
+        
+        chosen_chords = None
+        
+        if (self.select_song() == "Major Chords"):
+            chosen_chords = major_chords
+        elif (self.select_song() == "Minor Chords"):
+            chosen_chords = minor_chords
+        elif (self.select_song() == "Diminished Chords"):
+            chosen_chords = diminished_chords
+        elif (self.select_song() == "Augmented Chords"):
+            chosen_chords = augmented_chords
+            
+        current_tab = random.choice(chosen_chords)
+        
+        self.display.image(current_tab)
+        
+        
         pass
     
     def pause_song(self):
@@ -181,13 +208,35 @@ class GuitarHero():
             self.display_tabs.off()
             self.select_song() == None
             
-    
     def run(self):
+        """
+        Runs the program
+        """
         
-        self.song_scrolling()
-        #self.led_metronome()
-        #self.select_song()
-        #self.display_tabs()
+        while chosen_song == None:
+            
+            # Start by scrolling through songs + display on screen
+            self.song_scrolling(music_list)
+        
+            # Confirmed selection of song 
+            self.select_song()
+        
+        # Select tempo
+        while chosen_tempo == None:
+            self.tempo()
+        
+        # Have LED blink at selected tempo
+        self.led_metronome()
+        
+        # Run the song
+        t_end = time.time() + 60
+        while time.time() < t_end:
+            self.display_tabs()
+            time.sleep(120 / self.tempo())
+            
+        self.display.blank()
+        time.sleep(2)
+        
         
         
 # Main Script
@@ -196,10 +245,11 @@ if __name__ == '__main__':
     
     print("Program Start")
     
-    guitar_hero = GuitarHero(debug=True)
+    guitar_hero = GuitarHero()
     
-    try:
-        guitar_hero.run()
+    guitar_hero.run()
+    
+        
     
     
     

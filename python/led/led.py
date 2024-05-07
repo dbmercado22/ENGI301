@@ -77,6 +77,7 @@ class LED():
     pin             = None
     on_value        = None
     off_value       = None
+    led_on_time     = None
     
     def __init__(self, pin=None, low_off=True):
         """ Initialize variables and set up the LED """
@@ -191,4 +192,3 @@ if __name__ == '__main__':
         pass
 
     print("Test Complete")
-
